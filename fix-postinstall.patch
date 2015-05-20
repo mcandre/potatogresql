@@ -1,0 +1,111 @@
+diff --git a/postgresql.postinst b/postgresql.postinst
+index 4ab360c..3bd7c41 100755
+--- a/postgresql.postinst
++++ b/postgresql.postinst
+@@ -7,7 +7,7 @@ guessdatestyle() {
+ # Guess the postgresql datestyle to use for a given timezone (from glibc)
+ 
+ 	# make sure TZ is set and exported
+-	TZ=`cat /etc/timezone`
++	TZ=`cat /etc/localtime`
+ 	export TZ
+ 
+ 	# find the timezone offset from UTC
+@@ -216,46 +216,7 @@ fi
+ 
+ if [ ! -f ${PGDATA}/PG_VERSION ]
+ then
+-	echo "PostgreSQL databases can be created with any one of a number of different
+-character encodings.  Please choose the default encoding, which will be used
+-for all newly-created databases in the absence of a specific encoding
+-specification.  The choices are:
+-
+-        SQL_ASCII               ASCII
+-        EUC_JP                  Japanese EUC
+-        EUC_CN                  Chinese EUC
+-        EUC_KR                  Korean EUC
+-        EUC_TW                  Taiwan EUC
+-        UNICODE                 Unicode(UTF-8)
+-        MULE_INTERNAL           Mule internal
+-        LATIN1                  ISO 8859-1 English and some European languages
+-        LATIN2                  ISO 8859-2 English and some European languages
+-        LATIN3                  ISO 8859-3 English and some European languages
+-        LATIN4                  ISO 8859-4 English and some European languages
+-        LATIN5                  ISO 8859-5 English and some European languages
+-        KOI8                    KOI8-R
+-        WIN                     Windows CP1251
+-        ALT                     Windows CP866
+-
+-"
+-	ok=
+-	while [ -z "$ok" ]
+-	do
+-		echo -n "Enter default encoding (SQL_ASCII): "
+-
+-		read Encoding
+-		if [ -z "${Encoding}" ]
+-		then
+-			Encoding=UNICODE
+-		fi
+-		case ${Encoding} in SQL_ASCII | EUC_JP | EUC_CN | EUC_KR | EUC_TW | UNICODE | MULE_INTERNAL | LATIN1 | LATIN2 | LATIN3 | LATIN4 |  LATIN5 |  KOI8 | WIN | ALT )
+-			ok=true
+-			;;
+-		*)
+-			echo Invalid response, choose one of SQL_ASCII EUC_JP EUC_CN EUC_KR EUC_TW UNICODE MULE_INTERNAL LATIN1 LATIN2 LATIN3 LATIN4 LATIN5 KOI8 WIN ALT
+-			;;
+-		esac
+-	done
++	Encoding=UNICODE
+ 
+ 	echo Now installing the PostgreSQL database files in ${PGDATA}
+ 	echo su  postgres -c "cd ${PGHOME}; . ./${PROFILE}; initdb -e ${Encoding} -l ${PGLIB} -r ${PGDATA} -u postgres" 
+@@ -277,43 +238,20 @@ then
+ 	if [ -z "$2" -o "$2" = "<unknown>" ]
+ 	then
+ 		guessdatestyle
+-		cp /etc/postgresql/postmaster.init ${TMPFILE}
+-		echo "The date style affects how dates, times and timezone information is
+-presented to the user; the backend has a default setting, though the user can
+-override it in any session. These are the available date styles:
+-
+-   Style      Date            Datetime
+-   -------------------------------------------------------
+-   ISO        1999-07-17      1999-07-17 07:09:18+01
+-   SQL        17/07/1999      17/07/1999 07:09:19.00 BST
+-   POSTGRES   17-07-1999      Sat 17 Jul 07:09:19 1999 BST
+-   GERMAN     17.07.1999      17.07.1999 07:09:19.00 BST
+-   NONEURO    07-17-1999      Sat Jul 17 07:09:19 1999 BST
+-   US         07-17-1999      Sat Jul 17 07:09:19 1999 BST
+-   EURO       17-07-1999      Sat 17 Jul 07:09:19 1999 BST"
+-		ok=
+-		while [ -z "$ok" ]
+-		do
+-			echo -n "Choose your default date style ($GuessDateStyle): "
+-
+-			read ans
+-			if [ -z "$ans" ]
+-			then
+-				ans=$GuessDateStyle
+-			fi
+-
+-			case $ans in
++		ans=$GuessDateStyle
++
++		case $ans in
+ 			ISO|SQL|POSTGRES|GERMAN|NONEURO|US|EURO)
+ 				sed -e "/PGDATESTYLE/s/^.*$/PGDATESTYLE=$ans/"  <${TMPFILE} \
+-				>/etc/postgresql/postmaster.init
++				    >/etc/postgresql/postmaster.init
+ 				ok=true
+ 				;;
+ 			*)
+ 				echo "Invalid response ($ans);
+   answer must be one of ISO SQL POSTGRES GERMAN NONEURO US EURO"
+ 				;;
+-			esac
+-		done
++		esac
++
+ 		rm ${TMPFILE}
+ 	fi
+ fi

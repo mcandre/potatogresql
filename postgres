@@ -1,0 +1,5 @@
+#!/bin/sh
+
+echo 0 > /proc/sys/kernel/randomize_va_space
+
+su postgres -c "/usr/lib/postgresql/bin/postgres -i -D $PGDATA -p template1"
